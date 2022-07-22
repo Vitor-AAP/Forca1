@@ -1,0 +1,113 @@
+import requests as req
+from bs4 import BeautifulSoup as sopa
+from lxml import etree
+from random import randint as rd
+from unidecode import unidecode
+
+#parte do menuzinho no inicio do jogo
+print('        iniciando o Jogo !!!')
+print()
+
+print('\033[1;31m⚠: Não coloque acentos!\033[m')
+print('\033[1;92m⚠: Dale! Bom jogo!\033[m')
+print()
+print('Procurando uma palavra...')
+
+#configurando buscador de palavras
+
+cabeca = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 OPR/86.0.4363.70'}
+pagina = req.get('https://www.dicio.com.br/lista-de-palavras/', headers=cabeca)
+
+soup = sopa(pagina.content, 'html.parser')
+dom = etree.HTML(str(soup))
+
+#procurando uma palavra
+while True:
+    try:
+
+        prepal = dom.xpath(f'//*[@id="content"]/div[1]/p[{rd(14, 28)}]/a[{rd(1, 110)}]')[0].text
+        #if len(prepal) == 5:
+            #break
+        break
+    except:
+        print('Procurando...')
+
+#tirando os acentos da palavra encontrada
+pal = unidecode(prepal)
+
+print('Achei! tente advinhar')
+
+#configurando o jogo
+listtent = []
+for c in pal:
+    listtent.append(c.replace(c,'_'))
+
+def verif():
+    for c in listtent:
+        print(f'{c.upper()} ', end=' ')
+    print('\033[m')
+    #\033[x; y; zm \033[m troque os valores de x, y e z e veja o que acontece :) (pesquise por "cores no terminal python")
+
+verif()
+tentativas = 0
+jafoste =[]
+
+while True:
+    pont = 0
+    for i in range(len(pal)):
+        if (unidecode(pal[i]) == unidecode(listtent[i])):
+            pont += 1
+    if pont == len(pal) or pont == len(prepal):
+        break
+    tent = str(input('Digite aqui:')).lower()
+    tentativas += 1
+    #caso o usuário chutar a palavra inteira
+    if tent == pal or tent == prepal:
+        break
+    #caso o usuário digite uma letra já antes digitada
+    if tent in jafoste:
+        print('ja foi')
+        verif()
+
+    elif bool(tent in pal) == False and len(tent) == 1:
+        print(f'Não tem {tent.upper()}')
+        jafoste.append(tent)
+        verif()
+    #caso o usuário tentar digitar a palavra e errar
+    elif len(tent) > 1:
+        print('Errou!')
+        verif()
+
+    else:
+        jafoste.append(tent)
+        for i in tent:
+            #digamos que i = A
+            a = pal.count(i)
+            b = 0
+            while a > 0:
+               #se A == palavra[x] ou A == prepal[b]
+                if i == pal[b] or i == prepal[b]:
+                    listtent[b] = prepal[b]
+                    b += 1
+                    a -= 1
+                else:
+                    b+=1
+        verif()
+print()
+print(f'DALE! A palavra era: \033[1;30;107m  {prepal}  \033[m')
+print(f'Numero de tentativas: {tentativas}')
+print()
+
+#dicionário
+pagina = req.get(f'https://www.dicio.com.br/{unidecode(prepal)}/', headers=cabeca)
+soup = sopa(pagina.content, 'html.parser')
+dom = etree.HTML(str(soup))
+
+print(f'Defininição de {prepal} : ')
+try:
+    print(dom.xpath('//*[@id="content"]/div[1]/div[1]/p/span[2]')[0].text)
+except:
+    print('Erro ou não encontrado')
+finally:
+    print()
+    print('Obrigado por jogar')
